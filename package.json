@@ -2,7 +2,7 @@
     "name": "codingTime",
     "displayName": "codingTime",
     "description": "代码时间统计",
-    "version": "0.0.1",
+    "version": "0.0.12",
     "publisher": "yupeng",
     "engines": {
         "vscode": "^1.27.0"
@@ -11,13 +11,17 @@
         "Other"
     ],
     "activationEvents": [
-        "onCommand:extension.sayHello"
+        "onCommand:extension.sayHello",
+        "onCommand:codingTime.show"
     ],
     "main": "./extension",
     "contributes": {
         "commands": [{
             "command": "extension.sayHello",
             "title": "Hello World"
+        },{
+            "command": "codingTime.show",
+            "title": "Show your coding time"
         }]
     },
     "scripts": {
