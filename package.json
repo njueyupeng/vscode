@@ -2,7 +2,7 @@
     "name": "codingTime",
     "displayName": "codingTime",
     "description": "代码时间统计",
-    "version": "0.0.32",
+    "version": "0.0.59",
     "publisher": "yupeng",
     "engines": {
         "vscode": "^1.27.0"

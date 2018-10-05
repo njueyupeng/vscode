@@ -82,9 +82,7 @@ exports.activate = activate;
 // this method is called when your extension is deactivated
 function deactivate() {}
 
-function getCodingTimeHome() {
-
-}
+function getCodingTimeHome() {}
 
 function onChange() {
     onEvent(true);
@@ -102,11 +100,19 @@ function onEvent(isWrite) {
             let file = doc.fileName;
             if (file) {
                 let time = Date.now();
-                if (isWrite || enoughTimePassed(time) || lastFile !== file) {
-                    // this.sendHeartbeat(file, isWrite);
-                    console.log(file);
-                    let project = getProjectName(file);
-                    console.log(project);
+                if (enoughTimePassed(time)) {
+                    if (isWrite || lastFile !== file) {
+                        // this.sendHeartbeat(file, isWrite);
+                        console.log(file);
+                        let project = getProjectName(file);
+                        console.log(project);
+                        console.log(__dirname);
+                        collectTime(project, time - lastHeartbeat);
+                        console.log(getTime());
+                        lastFile = file;
+                        lastHeartbeat = time;
+                    }
+                } else {
                     lastFile = file;
                     lastHeartbeat = time;
                 }
@@ -115,8 +121,47 @@ function onEvent(isWrite) {
     }
 }
 
+function collectTime(project, time) {
+    let json = getTime() || {};
+    let now = new Date();
+    let strDate = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
+    for (let key in json) {
+        if (now - new Date(key).getTime() > 31 * 24 * 60 * 60 * 1000) {
+            delete json[key]
+        }
+    }
+    json[strDate] = json[strDate] || {};
+    json[strDate][project] = Number(json[strDate][project] || 0) + time;
+    let result = JSON.stringify(json);
+    console.log(result);
+    fs.writeFileSync(path.join(__dirname, '..', 'codingTime.json'), result, 'utf8');
+}
+
+function removeOldData() {
+
+}
+
+function getTime() {
+    let time = {
+    };
+    let data = '{}'
+    try {
+        data = fs.readFileSync(path.join(__dirname, '..', 'codingTime.json'), 'utf8') || '{}';
+    } catch (error) {
+        console.log(error);
+    }
+    console.log(data);
+    try {
+        time = JSON.parse(data);
+    } catch (error) {
+        console.log(error);
+    }
+    return time;
+}
+
+
 function enoughTimePassed(time) {
-    return lastHeartbeat + 120000 < time;
+    return lastHeartbeat + 1000 * 60 * 15 > time;
 }
 
 function getProjectName(file) {
@@ -129,6 +174,7 @@ function getProjectName(file) {
     }
     return null;
 }
+
 function init() {
     let statusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left
