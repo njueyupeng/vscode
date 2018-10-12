@@ -7,13 +7,14 @@ const os = require('os');
 const path = require('path');
 const child_process = require('child_process');
 
+let extensionPath = '';
 
 let lastFile = '';
 let lastHeartbeat = 0;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 function activate(context) {
-
+    extensionPath = context.extensionPath;
     let currentPanel = vscode.WebviewPanel || undefined;
 
 
@@ -33,13 +34,15 @@ function activate(context) {
 
 
             const updateWebview = () => {
-                let now = new Date();
-                let time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+                let time = getTime();
+                // let now = new Date();
+                // let time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
                 currentPanel.webview.html = getWebviewContent(time);
             }
 
             // Set initial content
             updateWebview();
+
 
             // And schedule updates to the content every second
             const interval = setInterval(updateWebview, 1000);
@@ -53,28 +56,27 @@ function activate(context) {
 }
 
 function getWebviewContent(time) {
-    // const scriptPathOnDisk = vscode.Uri.file(path.join(this._extensionPath, 'media', 'main.js'));
-    // const scriptUri = scriptPathOnDisk.with({ scheme: 'vscode-resource' });
+    const scriptPathOnDisk = vscode.Uri.file(path.join(extensionPath, 'media', 'main.js'));
+    const chartUri = vscode.Uri.file(path.join(extensionPath, 'media', 'Chart.bundle.min.js')).with({ scheme: 'vscode-resource'});
+    const scriptUri = scriptPathOnDisk.with({
+        scheme: 'vscode-resource'
+    });
     return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coding Time</title>
-</head>
-<body>
-    <div>这是一个内容:${time}</div>
-    <h1 id="lines-of-code-counter">0</h1>
-    <script>
-        const counter = document.getElementById('lines-of-code-counter');
-
-        let count = 0;
-        setInterval(() => {
-            counter.textContent = count++;
-        }, 100);
-    </script>
-</body>
-</html>`
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Coding Time</title>
+        </head>
+        <body>
+            <div>这是一个内容:${JSON.stringify(time)}</div>
+            <div style="height:300px">
+                <canvas id="myChart" style="width:50px;height:50px" ></canvas>
+            </div>
+            <script  src="${chartUri}"></script>
+            <script  src="${scriptUri}"></script>
+        </body>
+        </html>`
 }
 
 exports.activate = activate;
@@ -142,8 +144,7 @@ function removeOldData() {
 }
 
 function getTime() {
-    let time = {
-    };
+    let time = {};
     let data = '{}'
     try {
         data = fs.readFileSync(path.join(__dirname, '..', 'codingTime.json'), 'utf8') || '{}';
